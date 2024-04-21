@@ -1,0 +1,28 @@
+package:
+  name: data_analysis_helper
+  version: 0.0.1
+
+source:
+  path: ..
+
+build:
+  noarch: python
+  script: python -m pip install . --no-deps -vv
+
+requirements:
+  build:
+    - "hatch"
+  run:
+    - root
+    - lhcbstyle
+
+test:
+  imports:
+    - "src.data_analysis_helper"
+  source_files:
+    - "src/data_analysis_helper/*"
+    - "tests/*"
+  requires:
+    - "pytest"
+  commands:
+    - "pytest"
