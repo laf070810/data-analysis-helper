@@ -9,33 +9,33 @@ class RepeatedFit:
     def __init__(
         self,
         model: ROOT.RooAbsPdf,
-        parameter_list,
+        parameter_list: ROOT.RooArgSet | list[ROOT.RooAbsArg] | list[str],
         times: int,
         *,
-        random_seed: int = None,
+        random_seed: int | None = None,
+        allow_fixed_params: bool = False,
     ):
         self.model: ROOT.RooAbsPdf = model
         self.parameter_list: ROOT.RooArgSet = ROOT.RooArgSet(
             [
+                # match just by name
                 model.getVariables().find(parameter)
                 for parameter in parameter_list
-                if not model.getVariables().find(parameter).isConstant()
+                # IMPORTANT: filter fixed parameters, which can be overridden by allow_fixed_params
+                if (not model.getVariables().find(parameter).isConstant())
+                or allow_fixed_params
             ]
         )
         self.times: int = times
 
-        if random_seed:
+        if random_seed is not None:
             ROOT.RooRandom.randomGenerator().SetSeed(random_seed)
         else:
             ROOT.RooRandom.randomGenerator().SetSeed()
-        if isinstance(parameter_list, ROOT.RooArgSet):
-            self.parameter_samples: ROOT.RooDataSet = ROOT.RooUniform(
-                "uniform", "uniform", parameter_list
-            ).generate(parameter_list, times)
-        else:
-            self.parameter_samples: ROOT.RooDataSet = ROOT.RooUniform(
-                "uniform", "uniform", self.parameter_list
-            ).generate(self.parameter_list, times)
+
+        self.parameter_samples: ROOT.RooDataSet = ROOT.RooUniform(
+            "uniform", "uniform", self.parameter_list
+        ).generate(self.parameter_list, times)
 
     def do_repeated_fit(self, data: ROOT.RooDataSet, **fit_options) -> None:
         fit_options["Save"] = True
@@ -44,15 +44,16 @@ class RepeatedFit:
             print(f"\n\n---------- begin of fit {index} ----------\n")
             if index > 0:  # use original initial values when index == 0
                 for parameter in self.parameter_samples.get(index):
-                    if self.parameter_list.find(parameter):
-                        self.parameter_list.find(parameter).setVal(parameter.getValV())
+                    self.model.getParameters(data).find(parameter).setVal(
+                        parameter.getVal()
+                    )
             self.fitresults.append(self.model.fitTo(data, **fit_options))
             print(f"\n---------- end of fit {index} ----------\n\n")
 
     def get_succeeded_results(self) -> list[ROOT.RooFitResult]:
         return [fitresult for fitresult in self.fitresults if fitresult.status() == 0]
 
-    def get_best_result(self) -> ROOT.RooFitResult:
+    def get_best_result(self) -> ROOT.RooFitResult | None:
         succeeded_results = self.get_succeeded_results()
         if len(succeeded_results) > 0:
             return sorted(succeeded_results, key=lambda x: x.minNll())[0]
@@ -80,7 +81,7 @@ class RepeatedFit:
             fitresult.Print("V")
             print(f"\n********** finished printing fit result {index} **********\n")
 
-    def print_best_result(self):
+    def print_best_result(self) -> None:
         print(f"\n********** printing the best fit result **********\n")
         fitresult = self.get_best_result()
         if fitresult is not None:
