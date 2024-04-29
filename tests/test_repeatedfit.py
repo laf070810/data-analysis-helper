@@ -15,8 +15,14 @@ def test_repeatedfit():
     data = pdf.generate(x, 10000)
     repeated_fit = RepeatedFit(pdf, [mean, sigma], 10, random_seed=0)
     repeated_fit.do_repeated_fit(data)
+
+    repeated_fit.print_all_results()
+    repeated_fit.print_succeeded_results()
+    repeated_fit.print_best_result()
     result_best = repeated_fit.get_best_result()
 
     assert len(repeated_fit.fitresults) == 10
+    assert len(repeated_fit.get_succeeded_results()) == 10
+    assert result_best is not None
     assert round(result_best.floatParsFinal().find("mean").getVal(), 1) == 0.0
     assert round(result_best.floatParsFinal().find("sigma").getVal(), 1) == 1.0

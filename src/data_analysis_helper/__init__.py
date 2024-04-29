@@ -49,10 +49,19 @@ class RepeatedFit:
             self.fitresults.append(self.model.fitTo(data, **fit_options))
             print(f"\n---------- end of fit {index} ----------\n\n")
 
+    def get_succeeded_results(self) -> list[ROOT.RooFitResult]:
+        return [fitresult for fitresult in self.fitresults if fitresult.status() == 0]
+
+    def get_best_result(self) -> ROOT.RooFitResult:
+        succeeded_results = self.get_succeeded_results()
+        if len(succeeded_results) > 0:
+            return sorted(succeeded_results, key=lambda x: x.minNll())[0]
+        else:
+            return None
+
     def print_all_results(self) -> None:
-        for i, fitresult in enumerate(
-            sorted(self.fitresults, key=lambda x: x.minNll())
-        ):
+        print(f"\n********** printing all fit results **********\n")
+        for i, fitresult in enumerate(self.fitresults):
             print(f"\n********** printing fit result {i} **********\n")
             print(f"NLL: {fitresult.minNll()}")
             print(f"edm: {fitresult.edm()}")
@@ -60,5 +69,28 @@ class RepeatedFit:
             fitresult.Print("V")
             print(f"\n********** finished printing fit result {i} **********\n")
 
-    def get_best_result(self) -> ROOT.RooFitResult:
-        return sorted(self.fitresults, key=lambda x: x.minNll())[0]
+    def print_succeeded_results(self) -> None:
+        print(f"\n********** printing succeeded fit results **********\n")
+        for fitresult in self.get_succeeded_results():
+            index = self.fitresults.index(fitresult)
+            print(f"\n********** printing fit result {index} **********\n")
+            print(f"NLL: {fitresult.minNll()}")
+            print(f"edm: {fitresult.edm()}")
+            print()
+            fitresult.Print("V")
+            print(f"\n********** finished printing fit result {index} **********\n")
+
+    def print_best_result(self):
+        print(f"\n********** printing the best fit result **********\n")
+        fitresult = self.get_best_result()
+        if fitresult is not None:
+            index = self.fitresults.index(fitresult)
+            print(f"\nThe best fit result is result {index}. \n")
+            print(f"\n********** printing fit result {index} **********\n")
+            print(f"NLL: {fitresult.minNll()}")
+            print(f"edm: {fitresult.edm()}")
+            print()
+            fitresult.Print("V")
+            print(f"\n********** finished printing fit result {index} **********\n")
+        else:
+            print("\nNone of the fits has status 0. \n")
