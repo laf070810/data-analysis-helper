@@ -8,25 +8,39 @@ import ROOT
 class RepeatedFit:
     def __init__(
         self,
-        model: ROOT.RooAbsPdf,
-        parameter_list: ROOT.RooArgSet | list[ROOT.RooAbsArg] | list[str],
-        times: int,
         *,
-        random_seed: int | None = None,
+        model: ROOT.RooAbsPdf,
+        data: ROOT.RooDataSet,
+        num_fits: int,
+        parameter_list: ROOT.RooArgSet | list[ROOT.RooAbsArg] | list[str] | None = None,
         allow_fixed_params: bool = False,
+        random_seed: int | None = None,
     ):
         self.model: ROOT.RooAbsPdf = model
-        self.parameter_list: ROOT.RooArgSet = ROOT.RooArgSet(
-            [
-                # match just by name
-                model.getVariables().find(parameter)
-                for parameter in parameter_list
-                # IMPORTANT: filter fixed parameters, which can be overridden by allow_fixed_params
-                if (not model.getVariables().find(parameter).isConstant())
-                or allow_fixed_params
-            ]
-        )
-        self.times: int = times
+        self.data: ROOT.RooDataSet = data
+        self.num_fits: int = num_fits
+
+        if parameter_list is None:
+            self.parameter_list: ROOT.RooArgSet = ROOT.RooArgSet(
+                [
+                    parameter
+                    for parameter in model.getParameters(data)
+                    if (not parameter.isConstant()) or allow_fixed_params
+                ]
+            )
+        else:
+            self.parameter_list: ROOT.RooArgSet = ROOT.RooArgSet(
+                [
+                    # match just by name
+                    model.getParameters(data).find(parameter)
+                    for parameter in parameter_list
+                    # IMPORTANT: filter fixed parameters, which can be overridden by allow_fixed_params
+                    if (not model.getParameters(data).find(parameter).isConstant())
+                    or allow_fixed_params
+                ]
+            )
+        if self.parameter_list.size() > 31:
+            raise Exception("RooUniform does not allow >31 parameters. ")
 
         if random_seed is not None:
             ROOT.RooRandom.randomGenerator().SetSeed(random_seed)
@@ -35,19 +49,19 @@ class RepeatedFit:
 
         self.parameter_samples: ROOT.RooDataSet = ROOT.RooUniform(
             "uniform", "uniform", self.parameter_list
-        ).generate(self.parameter_list, times)
+        ).generate(self.parameter_list, num_fits)
 
-    def do_repeated_fit(self, data: ROOT.RooDataSet, **fit_options) -> None:
+    def do_repeated_fit(self, **fit_options) -> None:
         fit_options["Save"] = True
-        self.fitresults = []
-        for index in range(self.times):
+        self.fitresults: list[ROOT.RooFitResult] = []
+        for index in range(self.num_fits):
             print(f"\n\n---------- begin of fit {index} ----------\n")
             if index > 0:  # use original initial values when index == 0
                 for parameter in self.parameter_samples.get(index):
-                    self.model.getParameters(data).find(parameter).setVal(
+                    self.model.getParameters(self.data).find(parameter).setVal(
                         parameter.getVal()
                     )
-            self.fitresults.append(self.model.fitTo(data, **fit_options))
+            self.fitresults.append(self.model.fitTo(self.data, **fit_options))
             print(f"\n---------- end of fit {index} ----------\n\n")
 
     def get_succeeded_results(self) -> list[ROOT.RooFitResult]:
