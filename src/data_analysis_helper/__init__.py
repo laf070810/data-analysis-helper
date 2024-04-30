@@ -21,26 +21,20 @@ class RepeatedFit:
         self.num_fits: int = num_fits
 
         if parameter_list is None:
-            self.parameter_list: ROOT.RooArgSet = ROOT.RooArgSet(
-                [
-                    parameter
-                    for parameter in model.getParameters(data)
-                    if (not parameter.isConstant()) or allow_fixed_params
-                ]
-            )
+            self.parameter_list: list[ROOT.RooAbsArg] = [
+                parameter
+                for parameter in model.getParameters(data)
+                if (not parameter.isConstant()) or allow_fixed_params
+            ]
         else:
-            self.parameter_list: ROOT.RooArgSet = ROOT.RooArgSet(
-                [
-                    # match just by name
-                    model.getParameters(data).find(parameter)
-                    for parameter in parameter_list
-                    # IMPORTANT: filter fixed parameters, which can be overridden by allow_fixed_params
-                    if (not model.getParameters(data).find(parameter).isConstant())
-                    or allow_fixed_params
-                ]
-            )
-        if self.parameter_list.size() > 31:
-            raise Exception("RooUniform does not allow >31 parameters. ")
+            self.parameter_list: list[ROOT.RooAbsArg] = [
+                # match just by name
+                model.getParameters(data).find(parameter)
+                for parameter in parameter_list
+                # IMPORTANT: filter fixed parameters, which can be overridden by allow_fixed_params
+                if (not model.getParameters(data).find(parameter).isConstant())
+                or allow_fixed_params
+            ]
 
         if random_seed is not None:
             ROOT.RooRandom.randomGenerator().SetSeed(random_seed)
@@ -48,8 +42,14 @@ class RepeatedFit:
             ROOT.RooRandom.randomGenerator().SetSeed()
 
         self.parameter_samples: ROOT.RooDataSet = ROOT.RooUniform(
-            "uniform", "uniform", self.parameter_list
-        ).generate(self.parameter_list, num_fits)
+            "uniform", "uniform", self.parameter_list[0]
+        ).generate(self.parameter_list[0], num_fits)
+        for parameter in self.parameter_list[1:]:
+            self.parameter_samples.merge(
+                ROOT.RooUniform("uniform", "uniform", parameter).generate(
+                    parameter, num_fits
+                )
+            )
 
     def do_repeated_fit(self, **fit_options) -> None:
         fit_options["Save"] = True

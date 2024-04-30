@@ -2,16 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 
-import pytest
 import ROOT
 
 from src.data_analysis_helper import RepeatedFit
 
 
+def assert_rds_column_no_duplication(rds: ROOT.RooDataSet):
+    for parameter in rds.get():
+        parameter_sample = rds.to_numpy()[parameter.GetName()]
+        assert len(parameter_sample) == len(set(parameter_sample))
+
+
 def test_repeatedfit():
     x = ROOT.RooRealVar("x", "x", -5, 5)
-    mean = ROOT.RooRealVar("mean", "mean", 0, -5, 5)
-    sigma = ROOT.RooRealVar("sigma", "sigma", 1, 0.5, 5)
+    mean = ROOT.RooRealVar("mean", "mean", 0, -3, 3)
+    sigma = ROOT.RooRealVar("sigma", "sigma", 1, 0.5, 3)
     pdf = ROOT.RooGaussian("gauss", "gauss", x, mean, sigma)
 
     data = pdf.generate(x, 10000)
@@ -23,6 +28,7 @@ def test_repeatedfit():
     repeated_fit.print_best_result()
     result_best = repeated_fit.get_best_result()
 
+    assert_rds_column_no_duplication(repeated_fit.parameter_samples)
     assert len(repeated_fit.fitresults) == 10
     assert len(repeated_fit.get_succeeded_results()) == 10
     assert result_best is not None
@@ -47,6 +53,7 @@ def test_repeatedfit_explicit_paramlist():
     repeated_fit.print_best_result()
     result_best = repeated_fit.get_best_result()
 
+    assert_rds_column_no_duplication(repeated_fit.parameter_samples)
     assert len(repeated_fit.fitresults) == 10
     assert len(repeated_fit.get_succeeded_results()) == 10
     assert result_best is not None
@@ -54,19 +61,18 @@ def test_repeatedfit_explicit_paramlist():
     assert round(result_best.floatParsFinal().find("sigma").getVal(), 1) == 1.0
 
 
-def test_repeatedfit_exception():
+def test_repeatedfit_manyparams():
     x = ROOT.RooRealVar("x", "x", -5, 5)
-    means = [ROOT.RooRealVar(f"mean{i}", f"mean{i}", 0, -1, 1) for i in range(31)]
+    means = [ROOT.RooRealVar(f"mean{i}", f"mean{i}", 0, -1, 1) for i in range(100)]
     mean = ROOT.RooFormulaVar(
         "mean",
         "mean",
-        " + ".join([f"mean{i}" for i in range(31)]),
+        " + ".join([f"mean{i}" for i in range(100)]),
         means,
     )
     sigma = ROOT.RooRealVar("sigma", "sigma", 1, 0.5, 5)
     pdf = ROOT.RooGaussian("gauss", "gauss", x, mean, sigma)
 
     data = pdf.generate(x, 100)
-    with pytest.raises(Exception) as e_info:
-        repeated_fit = RepeatedFit(model=pdf, data=data, num_fits=10)
-    assert str(e_info.value) == "RooUniform does not allow >31 parameters. "
+    repeated_fit = RepeatedFit(model=pdf, data=data, num_fits=10)
+    assert_rds_column_no_duplication(repeated_fit.parameter_samples)
