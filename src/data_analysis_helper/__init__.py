@@ -111,6 +111,19 @@ class RepeatedFit:
             print("\nNone of the fits has status 0. \n")
 
 
+def get_params_at_limit(
+    fitresult: ROOT.RooFitResult, *, threshold: float = 0.05
+) -> list:
+    params_at_limit = []
+    for variable in fitresult.floatParsFinal():
+        width = variable.getMax() - variable.getMin()
+        if ((variable.getVal() - variable.getMin()) / width < threshold) or (
+            (variable.getMax() - variable.getVal()) / width < threshold
+        ):
+            params_at_limit.append(variable)
+    return params_at_limit
+
+
 def get_invariant_mass_expression(
     prefix: list[str],
     *,
