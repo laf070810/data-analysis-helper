@@ -4,6 +4,7 @@
 
 import subprocess
 from collections.abc import Callable
+from typing import Literal
 
 import ROOT
 
@@ -129,13 +130,27 @@ class RepeatedFit:
 
 
 def get_params_at_limit(
-    fitresult: ROOT.RooFitResult, *, threshold: float = 0.05
+    fitresult: ROOT.RooFitResult,
+    *,
+    width: float | tuple[float, float] | Literal["limits", "error"] = "error",
+    threshold: float = 3,
 ) -> list:
     params_at_limit = []
     for variable in fitresult.floatParsFinal():
-        width = variable.getMax() - variable.getMin()
-        if ((variable.getVal() - variable.getMin()) / width < threshold) or (
-            (variable.getMax() - variable.getVal()) / width < threshold
+        if width == "limits":
+            width_low = variable.getMax() - variable.getMin()
+            width_high = width_low
+        elif width == "error":
+            width_low = -variable.getErrorLo()
+            width_high = variable.getErrorHi()
+        elif isinstance(width, tuple):
+            width_low = width[0]
+            width_high = width[1]
+        else:
+            width_low = width
+            width_high = width_low
+        if ((variable.getVal() - variable.getMin()) / width_low < threshold) or (
+            (variable.getMax() - variable.getVal()) / width_high < threshold
         ):
             params_at_limit.append(variable)
     return params_at_limit
