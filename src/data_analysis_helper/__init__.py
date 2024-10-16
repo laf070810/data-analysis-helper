@@ -2,7 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 
+import subprocess
+from collections.abc import Callable
+
 import ROOT
+
+
+def print_func(string="", end="\n"):
+    if end is None:
+        end = ""
+    subprocess.run(f'echo -n "{string}{end}"', shell=True)
 
 
 class RepeatedFit:
@@ -15,10 +24,12 @@ class RepeatedFit:
         parameter_list: ROOT.RooArgSet | list[ROOT.RooAbsArg] | list[str] | None = None,
         allow_fixed_params: bool = False,
         random_seed: int | None = None,
+        print_func: Callable = print_func,
     ):
         self.model: ROOT.RooAbsPdf = model
         self.data: ROOT.RooDataSet = data
         self.num_fits: int = num_fits
+        self.print_func = print_func
 
         if parameter_list is None:
             self.parameter_list: list[ROOT.RooAbsArg] = [
@@ -55,14 +66,14 @@ class RepeatedFit:
         fit_options["Save"] = True
         self.fitresults: list[ROOT.RooFitResult] = []
         for index in range(self.num_fits):
-            print(f"\n\n---------- begin of fit {index} ----------\n")
+            self.print_func(f"\n\n---------- begin of fit {index} ----------\n")
             if index > 0:  # use original initial values when index == 0
                 for parameter in self.parameter_samples.get(index):
                     self.model.getParameters(self.data).find(parameter).setVal(
                         parameter.getVal()
                     )
             self.fitresults.append(self.model.fitTo(self.data, **fit_options))
-            print(f"\n---------- end of fit {index} ----------\n\n")
+            self.print_func(f"\n---------- end of fit {index} ----------\n\n")
 
     def get_succeeded_results(self) -> list[ROOT.RooFitResult]:
         return [fitresult for fitresult in self.fitresults if fitresult.status() == 0]
@@ -75,40 +86,46 @@ class RepeatedFit:
             return None
 
     def print_all_results(self) -> None:
-        print(f"\n********** printing all fit results **********\n")
+        self.print_func(f"\n********** printing all fit results **********\n")
         for i, fitresult in enumerate(self.fitresults):
-            print(f"\n********** printing fit result {i} **********\n")
-            print(f"NLL: {fitresult.minNll()}")
-            print(f"edm: {fitresult.edm()}")
-            print()
+            self.print_func(f"\n********** printing fit result {i} **********\n")
+            self.print_func(f"NLL: {fitresult.minNll()}")
+            self.print_func(f"edm: {fitresult.edm()}")
+            self.print_func()
             fitresult.Print("V")
-            print(f"\n********** finished printing fit result {i} **********\n")
+            self.print_func(
+                f"\n********** finished printing fit result {i} **********\n"
+            )
 
     def print_succeeded_results(self) -> None:
-        print(f"\n********** printing succeeded fit results **********\n")
+        self.print_func(f"\n********** printing succeeded fit results **********\n")
         for fitresult in self.get_succeeded_results():
             index = self.fitresults.index(fitresult)
-            print(f"\n********** printing fit result {index} **********\n")
-            print(f"NLL: {fitresult.minNll()}")
-            print(f"edm: {fitresult.edm()}")
-            print()
+            self.print_func(f"\n********** printing fit result {index} **********\n")
+            self.print_func(f"NLL: {fitresult.minNll()}")
+            self.print_func(f"edm: {fitresult.edm()}")
+            self.print_func()
             fitresult.Print("V")
-            print(f"\n********** finished printing fit result {index} **********\n")
+            self.print_func(
+                f"\n********** finished printing fit result {index} **********\n"
+            )
 
     def print_best_result(self) -> None:
-        print(f"\n********** printing the best fit result **********\n")
+        self.print_func(f"\n********** printing the best fit result **********\n")
         fitresult = self.get_best_result()
         if fitresult is not None:
             index = self.fitresults.index(fitresult)
-            print(f"\nThe best fit result is result {index}. \n")
-            print(f"\n********** printing fit result {index} **********\n")
-            print(f"NLL: {fitresult.minNll()}")
-            print(f"edm: {fitresult.edm()}")
-            print()
+            self.print_func(f"\nThe best fit result is result {index}. \n")
+            self.print_func(f"\n********** printing fit result {index} **********\n")
+            self.print_func(f"NLL: {fitresult.minNll()}")
+            self.print_func(f"edm: {fitresult.edm()}")
+            self.print_func()
             fitresult.Print("V")
-            print(f"\n********** finished printing fit result {index} **********\n")
+            self.print_func(
+                f"\n********** finished printing fit result {index} **********\n"
+            )
         else:
-            print("\nNone of the fits has status 0. \n")
+            self.print_func("\nNone of the fits has status 0. \n")
 
 
 def get_params_at_limit(
