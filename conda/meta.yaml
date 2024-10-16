@@ -15,6 +15,9 @@ requirements:
   run:
     - root
     - lhcbstyle
+    - numpy
+    - matplotlib
+    - mplhep
 
 test:
   imports:

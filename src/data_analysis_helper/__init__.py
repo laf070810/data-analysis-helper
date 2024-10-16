@@ -6,6 +6,9 @@ import subprocess
 from collections.abc import Callable
 from typing import Literal
 
+import matplotlib.pyplot as plt
+import mplhep
+import numpy as np
 import ROOT
 
 
@@ -221,3 +224,26 @@ def get_clone_rejection_expression(prefixes: list[str], threshold: float | str) 
             angle = f"acos(({prefixes[i]}_PX * {prefixes[j]}_PX + {prefixes[i]}_PY * {prefixes[j]}_PY + {prefixes[i]}_PZ * {prefixes[j]}_PZ) / {p1} / {p2})"
             expressions.append(f"(abs({angle}) > {threshold})")
     return " && ".join(expressions)
+
+
+def histplot(
+    x,
+    bins,
+    *,
+    xlabel: str,
+    unit: str | None = None,
+    range=None,
+    ax=None,
+    histtype="errorbar",
+    **kwargs,
+):
+    if ax is None:
+        fig, ax = plt.subplots()
+    hist, bin_edges = np.histogram(x, bins, range=range)
+    mplhep.histplot(hist, bins=bin_edges, histtype=histtype, ax=ax, **kwargs)
+    ax.set_xlabel(f"{xlabel}" if unit is None else f"{xlabel} ({unit})")
+    ax.set_ylabel(
+        f"Events / {bin_edges[1] - bin_edges[0]:.2f}"
+        if unit is None
+        else f"Events / {bin_edges[1] - bin_edges[0]:.2f} ({unit})"
+    )
