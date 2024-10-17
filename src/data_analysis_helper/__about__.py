@@ -1,4 +1,4 @@
 # SPDX-FileCopyrightText: 2024-present Anfeng Li <anfeng.li@cern.ch>
 #
 # SPDX-License-Identifier: MIT
-__version__ = "0.5.2"
+__version__ = "0.5.3"
