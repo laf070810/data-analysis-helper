@@ -11,7 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: publish-to-conda
-        uses: maxibor/conda-package-publish-action@v1.1
+        uses: TomographicImaging/conda-package-publish-action@v2
         with:
           subDir: "conda"
           AnacondaToken: ${{ secrets.ANACONDA_TOKEN }}
+          publish: true

@@ -24,7 +24,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = ["lhcbstyle"]
+dependencies = []
 
 [project.urls]
 Documentation = "https://github.com/laf070810/data-analysis-helper#readme"
