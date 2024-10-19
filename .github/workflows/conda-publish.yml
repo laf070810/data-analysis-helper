@@ -15,5 +15,6 @@ jobs:
         with:
           subDir: "conda"
           AnacondaToken: ${{ secrets.ANACONDA_TOKEN }}
+          channels: "-c conda-forge"
           publish: true
           test_all: true
