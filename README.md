@@ -9,13 +9,27 @@
 
 - [data analysis helper](#data-analysis-helper)
   - [Installation](#installation)
+    - [pip (recommended)](#pip-recommended)
+    - [conda](#conda)
   - [License](#license)
 
 ## Installation
 
+### pip (recommended)
+
+```console
+pip install data_analysis_helper
+```
+
+When installing with pip, it will not automatically install all dependencies, allowing selectively choosing dependencies when using only parts of this library. So pip is the recommended way to install this library. 
+
+### conda
+
 ```console
 conda install laf070810::data_analysis_helper
 ```
+
+When installing with conda, dependencies which are needed by any part of this library will be installed. 
 
 ## License
 
