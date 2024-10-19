@@ -4,7 +4,7 @@
 
 import ROOT
 
-from src.data_analysis_helper import RepeatedFit, get_params_at_limit
+from src.data_analysis_helper.root import RepeatedFit, get_params_at_limit
 
 
 def test_get_params_at_limit_one_param_at_limit():

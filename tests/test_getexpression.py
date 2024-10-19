@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-from src.data_analysis_helper import (
+from src.data_analysis_helper.expr import (
     get_clone_rejection_expression,
     get_invariant_mass_expression,
     get_p_expression,

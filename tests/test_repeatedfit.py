@@ -4,7 +4,7 @@
 
 import ROOT
 
-from src.data_analysis_helper import RepeatedFit
+from src.data_analysis_helper.root import RepeatedFit
 
 
 def assert_rds_column_no_duplication(rds: ROOT.RooDataSet):
