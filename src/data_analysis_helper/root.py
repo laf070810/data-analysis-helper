@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import Literal
 
 import ROOT
@@ -149,3 +149,19 @@ def get_params_at_limit(
         ):
             params_at_limit.append(variable)
     return params_at_limit
+
+
+def set_params_to_fit_result(
+    params: Iterable[ROOT.RooAbsArg], fitresult: ROOT.RooFitResult
+):
+    for param in params:
+        if (
+            fitresult.floatParsFinal().find(param) != None
+        ):  # "is not None" doesn't work here
+            print(f"setting {param.GetName()} to floatParsFinal value of fit result")
+            param.setVal(fitresult.floatParsFinal().find(param).getVal())
+        elif fitresult.constPars().find(param) != None:
+            print(f"settting {param.GetName()} to constPars value of fit result")
+            param.setVal(fitresult.constPars().find(param).getVal())
+        else:
+            print(f"{param.GetName()} not found in fit result")
