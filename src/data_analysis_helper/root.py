@@ -152,7 +152,9 @@ def get_params_at_limit(
 
 
 def set_params_to_fit_result(
-    params: Iterable[ROOT.RooAbsArg], fitresult: ROOT.RooFitResult
+    params: Iterable[ROOT.RooAbsArg],
+    fitresult: ROOT.RooFitResult,
+    set_error: bool = True,
 ):
     for param in params:
         if (
@@ -160,6 +162,11 @@ def set_params_to_fit_result(
         ):  # "is not None" doesn't work here
             print(f"setting {param.GetName()} to floatParsFinal value of fit result")
             param.setVal(fitresult.floatParsFinal().find(param).getVal())
+            if set_error:
+                print(
+                    f"setting {param.GetName()} to floatParsFinal error of fit result"
+                )
+                param.setError(fitresult.floatParsFinal().find(param).getError())
         elif fitresult.constPars().find(param) != None:
             print(f"settting {param.GetName()} to constPars value of fit result")
             param.setVal(fitresult.constPars().find(param).getVal())

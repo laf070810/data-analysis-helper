@@ -37,8 +37,16 @@ def test_set_params_to_fit_result():
         != result_best.floatParsFinal().find("mean").getVal()
     )
     assert (
+        workspace2.var("mean").getError()
+        != result_best.floatParsFinal().find("mean").getError()
+    )
+    assert (
         workspace2.var("sigma").getVal()
         != result_best.floatParsFinal().find("sigma").getVal()
+    )
+    assert (
+        workspace2.var("sigma").getError()
+        != result_best.floatParsFinal().find("sigma").getError()
     )
 
     set_params_to_fit_result(workspace2.allVars(), result_best)
@@ -48,8 +56,16 @@ def test_set_params_to_fit_result():
         == result_best.floatParsFinal().find("mean").getVal()
     )
     assert (
+        workspace2.var("mean").getError()
+        == result_best.floatParsFinal().find("mean").getError()
+    )
+    assert (
         workspace2.var("sigma").getVal()
         == result_best.floatParsFinal().find("sigma").getVal()
+    )
+    assert (
+        workspace2.var("sigma").getError()
+        == result_best.floatParsFinal().find("sigma").getError()
     )
 
     workspace3 = ROOT.RooWorkspace("w3", "w3")
@@ -61,17 +77,33 @@ def test_set_params_to_fit_result():
         != result_best.floatParsFinal().find("mean").getVal()
     )
     assert (
+        pdf.getVariables().find("mean").getError()
+        != result_best.floatParsFinal().find("mean").getError()
+    )
+    assert (
         pdf.getVariables().find("sigma").getVal()
         != result_best.floatParsFinal().find("sigma").getVal()
     )
+    assert (
+        pdf.getVariables().find("sigma").getError()
+        != result_best.floatParsFinal().find("sigma").getError()
+    )
 
-    set_params_to_fit_result(workspace3.allVars(), result_best)
+    set_params_to_fit_result(workspace3.allVars(), result_best, set_error=False)
 
     assert (
         pdf.getVariables().find("mean").getVal()
         == result_best.floatParsFinal().find("mean").getVal()
     )
     assert (
+        pdf.getVariables().find("mean").getError()
+        != result_best.floatParsFinal().find("mean").getError()
+    )
+    assert (
         pdf.getVariables().find("sigma").getVal()
         == result_best.floatParsFinal().find("sigma").getVal()
+    )
+    assert (
+        pdf.getVariables().find("sigma").getError()
+        != result_best.floatParsFinal().find("sigma").getError()
     )
