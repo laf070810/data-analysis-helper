@@ -168,7 +168,7 @@ def set_params_to_fit_result(
                 )
                 param.setError(fitresult.floatParsFinal().find(param).getError())
         elif fitresult.constPars().find(param) != None:
-            print(f"settting {param.GetName()} to constPars value of fit result")
+            print(f"setting {param.GetName()} to constPars value of fit result")
             param.setVal(fitresult.constPars().find(param).getVal())
         else:
             print(f"{param.GetName()} not found in fit result")
