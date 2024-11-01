@@ -99,3 +99,19 @@ def test_repeatedfit_custom_print_func():
     assert result_best is not None
     assert round(result_best.floatParsFinal().find("mean").getVal(), 1) == 0.0
     assert round(result_best.floatParsFinal().find("sigma").getVal(), 1) == 1.0
+
+
+def test_repeatedfit_print_observables_and_parameters():
+    x = ROOT.RooRealVar("x", "x", -5, 5)
+    mean = ROOT.RooRealVar("mean", "mean", 0, -3, 3)
+    sigma = ROOT.RooRealVar("sigma", "sigma", 1, 0.5, 3)
+    pdf = ROOT.RooGaussian("gauss", "gauss", x, mean, sigma)
+
+    data = pdf.generate(x, 10000)
+    repeated_fit = RepeatedFit(model=pdf, data=data, num_fits=10)
+
+    sigma.setConstant(True)
+
+    repeated_fit.print_observables()
+    repeated_fit.print_float_parameters()
+    repeated_fit.print_const_parameters("V")

@@ -81,6 +81,20 @@ class RepeatedFit:
         else:
             return None
 
+    def print_observables(self, *args, **kwargs) -> None:
+        for variable in self.model.getObservables(self.data):
+            variable.Print(*args, **kwargs)
+
+    def print_float_parameters(self, *args, **kwargs) -> None:
+        for variable in self.model.getParameters(self.data):
+            if not variable.isConstant():
+                variable.Print(*args, **kwargs)
+
+    def print_const_parameters(self, *args, **kwargs) -> None:
+        for variable in self.model.getParameters(self.data):
+            if variable.isConstant():
+                variable.Print(*args, **kwargs)
+
     def print_all_results(self) -> None:
         self.print_func(f"\n********** printing all fit results **********\n")
         for i, fitresult in enumerate(self.fitresults):
