@@ -155,6 +155,7 @@ def set_params_to_fit_result(
     params: Iterable[ROOT.RooAbsArg],
     fitresult: ROOT.RooFitResult,
     set_error: bool = True,
+    verbose: bool = False,
 ):
     for param in params:
         if (
@@ -171,4 +172,5 @@ def set_params_to_fit_result(
             print(f"setting {param.GetName()} to constPars value of fit result")
             param.setVal(fitresult.constPars().find(param).getVal())
         else:
-            print(f"{param.GetName()} not found in fit result")
+            if verbose:
+                print(f"{param.GetName()} not found in fit result")

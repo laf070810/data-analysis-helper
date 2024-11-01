@@ -89,7 +89,9 @@ def test_set_params_to_fit_result():
         != result_best.floatParsFinal().find("sigma").getError()
     )
 
-    set_params_to_fit_result(workspace3.allVars(), result_best, set_error=False)
+    set_params_to_fit_result(
+        workspace3.allVars(), result_best, set_error=False, verbose=True
+    )
 
     assert (
         pdf.getVariables().find("mean").getVal()
