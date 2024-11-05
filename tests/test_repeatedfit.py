@@ -42,7 +42,7 @@ def test_repeatedfit_explicit_paramlist():
     sigma = ROOT.RooRealVar("sigma", "sigma", 1, 0.5, 5)
     pdf = ROOT.RooGaussian("gauss", "gauss", x, mean, sigma)
 
-    data = pdf.generate(x, 10000)
+    data = pdf.generate(x, 50000)
     repeated_fit = RepeatedFit(
         model=pdf, data=data, parameter_list=[mean, sigma], num_fits=10, random_seed=0
     )
@@ -115,3 +115,28 @@ def test_repeatedfit_print_observables_and_parameters():
     repeated_fit.print_observables()
     repeated_fit.print_float_parameters()
     repeated_fit.print_const_parameters("V")
+
+
+def test_repeatedfit_allowed_statuses():
+    x = ROOT.RooRealVar("x", "x", -5, 5)
+    mean = ROOT.RooRealVar("mean", "mean", 0, -3, 3)
+    sigma = ROOT.RooRealVar("sigma", "sigma", 1, 0.5, 3)
+    pdf = ROOT.RooGaussian("gauss", "gauss", x, mean, sigma)
+
+    data = pdf.generate(x, 100)
+
+    mean.setRange(50, 51)  # make the fit fail
+    repeated_fit = RepeatedFit(model=pdf, data=data, num_fits=10)
+    repeated_fit.do_repeated_fit()
+
+    repeated_fit.print_all_results()
+    repeated_fit.print_succeeded_results()
+    repeated_fit.print_best_result()
+    result_best_allallowed = repeated_fit.get_best_result(allowed_statuses="all")
+
+    assert_rds_column_no_duplication(repeated_fit.parameter_samples)
+    assert len(repeated_fit.fitresults) == 10
+    assert len(repeated_fit.get_succeeded_results()) < 10
+    assert len(repeated_fit.get_succeeded_results(allowed_statuses=[0, 2, 302])) == 10
+    assert len(repeated_fit.get_succeeded_results(allowed_statuses="all")) == 10
+    assert result_best_allallowed is not None

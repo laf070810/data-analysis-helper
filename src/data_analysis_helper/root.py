@@ -71,11 +71,24 @@ class RepeatedFit:
             self.fitresults.append(self.model.fitTo(self.data, **fit_options))
             self.print_func(f"\n---------- end of fit {index} ----------\n\n")
 
-    def get_succeeded_results(self) -> list[ROOT.RooFitResult]:
-        return [fitresult for fitresult in self.fitresults if fitresult.status() == 0]
+    def get_succeeded_results(
+        self, *, allowed_statuses: list[int] | Literal["all"] = [0]
+    ) -> list[ROOT.RooFitResult]:
+        if allowed_statuses == "all":
+            return self.fitresults
+        else:
+            return [
+                fitresult
+                for fitresult in self.fitresults
+                if fitresult.status() in allowed_statuses
+            ]
 
-    def get_best_result(self) -> ROOT.RooFitResult | None:
-        succeeded_results = self.get_succeeded_results()
+    def get_best_result(
+        self, *, allowed_statuses: list[int] | Literal["all"] = [0]
+    ) -> ROOT.RooFitResult | None:
+        succeeded_results = self.get_succeeded_results(
+            allowed_statuses=allowed_statuses
+        )
         if len(succeeded_results) > 0:
             return sorted(succeeded_results, key=lambda x: x.minNll())[0]
         else:
