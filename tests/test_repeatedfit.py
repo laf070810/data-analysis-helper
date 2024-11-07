@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import numpy as np
 import ROOT
 
 from src.data_analysis_helper.root import RepeatedFit
@@ -140,3 +141,22 @@ def test_repeatedfit_allowed_statuses():
     assert len(repeated_fit.get_succeeded_results(allowed_statuses=[0, 2, 302])) == 10
     assert len(repeated_fit.get_succeeded_results(allowed_statuses="all")) == 10
     assert result_best_allallowed is not None
+
+
+def test_repeatedfit_reproducibility():
+    x = ROOT.RooRealVar("x", "x", -5, 5)
+    mean = ROOT.RooRealVar("mean", "mean", 0, -3, 3)
+    sigma = ROOT.RooRealVar("sigma", "sigma", 1, 0.5, 3)
+    pdf = ROOT.RooGaussian("gauss", "gauss", x, mean, sigma)
+
+    data = pdf.generate(x, 10000)
+
+    repeated_fit = RepeatedFit(model=pdf, data=data, num_fits=10, random_seed=10)
+    samples = np.stack(list(repeated_fit.parameter_samples.to_numpy().values()), axis=1)
+
+    for i in range(50):
+        repeated_fit = RepeatedFit(model=pdf, data=data, num_fits=10, random_seed=10)
+        assert (
+            np.stack(list(repeated_fit.parameter_samples.to_numpy().values()), axis=1)
+            == samples
+        ).all()
