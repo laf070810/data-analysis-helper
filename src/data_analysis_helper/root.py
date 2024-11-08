@@ -201,3 +201,15 @@ def set_params_to_fit_result(
         else:
             if verbose:
                 print(f"{param.GetName()} not found in fit result")
+
+
+def convert_root_matrix(matrix: ROOT.TMatrixTBase, **kwargs):
+    import numpy as np
+
+    nrows = matrix.GetNrows()
+    ncols = matrix.GetNcols()
+    mat = np.zeros(shape=(nrows, ncols), **kwargs)
+    for i in range(nrows):
+        for j in range(ncols):
+            mat[i, j] = matrix[i, j]
+    return mat
