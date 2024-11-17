@@ -18,6 +18,7 @@ class RepeatedFit:
         data: ROOT.RooDataSet,
         num_fits: int,
         parameter_list: ROOT.RooArgSet | list[ROOT.RooAbsArg] | list[str] | None = None,
+        parameter_samples: ROOT.RooDataSet | None = None,
         allow_fixed_params: bool = False,
         random_seed: int | None = None,
         print_func: Callable = print_func,
@@ -48,22 +49,27 @@ class RepeatedFit:
         else:
             ROOT.RooRandom.randomGenerator().SetSeed()
 
-        self.parameter_samples: ROOT.RooDataSet = ROOT.RooUniform(
-            "uniform", "uniform", self.parameter_list[0]
-        ).generate(self.parameter_list[0], num_fits)
-        for parameter in self.parameter_list[1:]:
-            self.parameter_samples.merge(
-                ROOT.RooUniform("uniform", "uniform", parameter).generate(
-                    parameter, num_fits
+        if parameter_samples is None:
+            self.parameter_samples: ROOT.RooDataSet = ROOT.RooUniform(
+                "uniform", "uniform", self.parameter_list[0]
+            ).generate(self.parameter_list[0], num_fits)
+            for parameter in self.parameter_list[1:]:
+                self.parameter_samples.merge(
+                    ROOT.RooUniform("uniform", "uniform", parameter).generate(
+                        parameter, num_fits
+                    )
                 )
-            )
+        else:
+            self.parameter_samples = parameter_samples
 
-    def do_repeated_fit(self, **fit_options) -> None:
+    def do_repeated_fit(self, use_initial_values=True, **fit_options) -> None:
         fit_options["Save"] = True
         self.fitresults: list[ROOT.RooFitResult] = []
         for index in range(self.num_fits):
             self.print_func(f"\n\n---------- begin of fit {index} ----------\n")
-            if index > 0:  # use original initial values when index == 0
+            if (not use_initial_values) or (
+                index > 0
+            ):  # use original initial values when index == 0 and use_initial_values
                 for parameter in self.parameter_samples.get(index):
                     self.model.getParameters(self.data).find(parameter).setVal(
                         parameter.getVal()

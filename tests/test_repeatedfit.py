@@ -160,3 +160,25 @@ def test_repeatedfit_reproducibility():
             np.stack(list(repeated_fit.parameter_samples.to_numpy().values()), axis=1)
             == samples
         ).all()
+
+
+def test_repeatedfit_use_initial_values():
+    x = ROOT.RooRealVar("x", "x", -5, 5)
+    mean = ROOT.RooRealVar("mean", "mean", 0, -3, 3)
+    sigma = ROOT.RooRealVar("sigma", "sigma", 1, 0.5, 3)
+    pdf = ROOT.RooGaussian("gauss", "gauss", x, mean, sigma)
+
+    data = pdf.generate(x, 10000)
+    repeated_fit = RepeatedFit(model=pdf, data=data, num_fits=10)
+
+    repeated_fit.do_repeated_fit()
+    assert repeated_fit.fitresults[0].floatParsInit().find("mean").getVal() == 0
+    assert repeated_fit.fitresults[0].floatParsInit().find("sigma").getVal() == 1
+    for i in range(1, 10):
+        assert repeated_fit.fitresults[i].floatParsInit().find("mean").getVal() != 0
+        assert repeated_fit.fitresults[i].floatParsInit().find("sigma").getVal() != 1
+
+    repeated_fit.do_repeated_fit(use_initial_values=False)
+    for i in range(10):
+        assert repeated_fit.fitresults[i].floatParsInit().find("mean").getVal() != 0
+        assert repeated_fit.fitresults[i].floatParsInit().find("sigma").getVal() != 1
