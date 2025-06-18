@@ -11,6 +11,7 @@ def histplot(
     unit: str | None = None,
     range=None,
     ax=None,
+    weights=None,
     histtype="errorbar",
     **kwargs,
 ):
@@ -20,8 +21,13 @@ def histplot(
 
     if ax is None:
         fig, ax = plt.subplots()
-    hist, bin_edges = np.histogram(x, bins, range=range)
-    mplhep.histplot(hist, bins=bin_edges, histtype=histtype, ax=ax, **kwargs)
+    if weights is None:
+        weights = np.ones(len(x))
+    hist, bin_edges = np.histogram(x, bins, range=range, weights=weights)
+    hist_sq, _ = np.histogram(x, bin_edges, range=range, weights=weights**2)
+    mplhep.histplot(
+        hist, bins=bin_edges, w2=hist_sq, histtype=histtype, ax=ax, **kwargs
+    )
     ax.set_xlabel(f"{xlabel}" if unit is None else f"{xlabel} ({unit})")
     ax.set_ylabel(
         f"Events / {bin_edges[1] - bin_edges[0]:.2f}"
